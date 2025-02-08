@@ -181,17 +181,72 @@
             flex-wrap: wrap;
         }
 
+        /* 新增样式 */
+        .mobile-category {
+            display: none;
+            margin-bottom: 1rem;
+        }
+        
+        .category-select {
+            width: 150px;
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .unprepared {
+            background-color: #ffe5e5;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .depart-btn {
+            background: var(--danger-color);
+            margin-top: 1rem;
+        }
+
+        /* 电脑端布局 */
+        @media (min-width: 769px) {
+            .item-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .category-nav {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .category-btn:not(:first-child) {
+                width: calc(24% - 10px);
+                margin: 0 2px;
+            }
+        }
+
+        /* 手机端布局 */
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
             }
             
+            .category-nav {
+                display: none !important;
+            }
+            .mobile-category {
+                display: block;
+            }
             .add-item-form {
                 flex-direction: column;
             }
-            
             .item-card {
-                flex-wrap: wrap;
+                width: 100%;
+                margin: 5px 0;
+            }
+            .mode-switch {
+                position: static;
+                transform: none;
+                margin-top: 1rem;
             }
         }
     </style>
@@ -211,6 +266,16 @@
             <div class="mode-switch">
                 <button onclick="toggleMode()" id="modeBtn">切换到返程模式</button>
             </div>
+        </div>
+
+        <div class="mobile-category">
+            <select class="category-select" onchange="setCategory(this.value)">
+                <option value="所有">所有分类</option>
+                <option value="日常用品">日常用品</option>
+                <option value="电子设备">电子设备</option>
+                <option value="重要文件">重要文件</option>
+                <option value="衣物鞋帽">衣物鞋帽</option>
+            </select>
         </div>
 
         <div class="category-nav" id="categoryNav"></div>
@@ -239,6 +304,7 @@
         <div class="item-list" id="itemList"></div>
 
         <div class="controls">
+            <button class="depart-btn" onclick="highlightUnprepared()"><i class="fas fa-plane"></i> 出发检查</button>
             <button onclick="exportData()"><i class="fas fa-download"></i> 导出数据</button>
             <button onclick="importData()"><i class="fas fa-upload"></i> 导入数据</button>
             <button onclick="clearAll()"><i class="fas fa-trash"></i> 清空全部</button>
@@ -262,6 +328,10 @@
             }
         }
 
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
         function initApp() {
             renderCategories();
             renderItems();
@@ -269,10 +339,13 @@
         }
 
         function renderCategories() {
+            if(isMobile()) return;
+            
             const nav = document.getElementById('categoryNav');
             nav.innerHTML = categories.map(cat => `
                 <button class="category-btn ${cat === currentCategory ? 'active' : ''}" 
-                        onclick="setCategory('${cat}')">
+                        onclick="setCategory('${cat}')"
+                        style="${cat !== '所有' ? 'width: calc(24% - 10px); margin: 0 2px;' : ''}">
                     ${cat}
                 </button>
             `).join('');
@@ -282,6 +355,9 @@
             currentCategory = cat;
             renderCategories();
             renderItems();
+            if(isMobile()) {
+                document.querySelector('.category-select').value = cat;
+            }
         }
 
         function addItem(e) {
@@ -308,7 +384,7 @@
             
             const list = document.getElementById('itemList');
             list.innerHTML = filtered.map(item => `
-                <div class="item-card">
+                <div class="item-card" data-id="${item.id}">
                     <div class="item-status ${getStatusClass(item)}" 
                          onclick="toggleStatus(${item.id})"></div>
                     <div class="item-info">
@@ -339,6 +415,15 @@
             saveData();
             renderItems();
             updateStats();
+        }
+
+        function highlightUnprepared() {
+            const list = document.getElementById('itemList');
+            list.querySelectorAll('.item-card').forEach(card => {
+                const id = parseInt(card.dataset.id);
+                const item = items.find(i => i.id === id);
+                card.classList.toggle('unprepared', !item.packed && !isReturnMode);
+            });
         }
 
         function editItem(id) {
@@ -428,6 +513,12 @@
             ];
             saveData();
         }
+
+        // 窗口大小变化时自动刷新布局
+        window.addEventListener('resize', () => {
+            renderCategories();
+            renderItems();
+        });
     </script>
 </body>
 </html>
