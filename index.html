@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能旅行管家 - TravelMaster</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --text-light: #777777;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 密码覆盖层 */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .password-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .password-box h2 {
+            margin-bottom: 1.5rem;
+            color: var(--dark-color);
+        }
+
+        .password-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .password-box input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .password-box button {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: var(--transition);
+        }
+
+        .password-box button:hover {
+            background: #2980b9;
+        }
+
+        /* 顶部应用栏 */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .app-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-title h1 {
+            font-size: 1.8rem;
+            color: var(--dark-color);
+        }
+
+        .app-title i {
+            color: var(--primary-color);
+            font-size: 2rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 模式切换器 */
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            background: var(--light-color);
+            border-radius: 50px;
+            padding: 5px;
+            position: relative;
+        }
+
+        .mode-toggle-btn {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 2;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .mode-toggle-slider {
+            position: absolute;
+            height: calc(100% - 10px);
+            width: calc(50% - 5px);
+            background: var(--primary-color);
+            border-radius: 50px;
+            transition: var(--transition);
+            z-index: 1;
+        }
+
+        .mode-toggle.sreturn-mode .mode-toggle-slider {
+            transform: translateX(100%);
+        }
+
+        .mode-toggle .mode-toggle-btn.active {
+            color: white;
+        }
+
+        /* 分类导航 */
+        .category-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .category-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .category-nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background: var(--light-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .category-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .category-btn:hover {
+            background: #dfe6e9;
+        }
+
+        .category-btn.active:hover {
+            background: #2980b9;
+        }
+
+        /* 添加物品表单 */
+        .add-item-card {
+            background: var(--card-background);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-title {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            color: var(--dark-color);
+        }
+
+        .add-item-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        input, select, textarea, button {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        /* 统计信息 */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--card-background);
+            padding: 1.2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* 物品列表 */
+        .items-container {
+            margin-bottom: 2rem;
+        }
+
+        .items-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .item-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1.2rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .item-card.unprepared {
+            background: #ffebee;
+            animation: pulse 2s infinite;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .item-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+
+        .item-quantity {
+            background: var(--light-color);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .item-category {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #e8f4fc;
+            color: var(--primary-color);
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .item-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .item-priority {
+            font-weight: 500;
+        }
+
+        .priority-high {
+            color: #e74c3c;
+        }
+
+        .priority-medium {
+            color: #f39c12;
+        }
+
+        .priority-low {
+            color: #27ae60;
+        }
+
+        .item-notes {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .item-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .status-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .status-checkbox.checked {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .status-checkbox.checked::after {
+            content: "✓";
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--light-color);
+            color: var(--text-color);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-icon:hover {
+            background: #dfe6e9;
+        }
+
+        /* 控制按钮 */
+        .controls-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .control-card {
+            background: var(--card-background);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .control-title {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+        }
+
+        .control-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--light-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-btn:hover {
+            background: #dfe6e9;
+        }
+
+        .control-btn i {
+            font-size: 1.1rem;
+        }
+
+        .btn-danger {
+            background: #ffebee;
+            color: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #ffcdd2;
+        }
+
+        .btn-success {
+            background: #e8f5e9;
+            color: #2ecc71;
+        }
+
+        .btn-success:hover {
+            background: #c8e6c9;
+        }
+
+        /* 动画 */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .app-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .header-actions {
+                justify-content: center;
+            }
+            
+            .add-item-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .items-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .controls-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .category-nav {
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 10px;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .item-header {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .item-footer {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .item-actions {
+                align-self: flex-end;
+            }
+        }
+
+        /* 暗色模式支持 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #1a1a1a;
+                --card-background: #2d2d2d;
+                --text-color: #f0f0f0;
+                --text-light: #a0a0a0;
+                --light-color: #3d3d3d;
+            }
+            
+            input, select, textarea {
+                background: #3d3d3d;
+                color: #f0f0f0;
+                border-color: #555;
+            }
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <div class="password-overlay">
+        <div class="password-box">
+            <h2><i class="fas fa-lock"></i> 旅行管家认证</h2>
+            <input type="password" id="passwordInput" placeholder="请输入访问密码" onkeypress="if(event.key=='Enter') checkPassword()">
+            <button onclick="checkPassword()">解锁</button>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: #777;">提示：默认密码是 admin123</p>
+        </div>
+    </div>
+
+    <div class="app-container" style="display: none;">
+        <!-- 顶部应用栏 -->
+        <header class="app-header">
+            <div class="app-title">
+                <i class="fas fa-suitcase-rolling"></i>
+                <h1>智能旅行管家 <span class="app-version">v2.0</span></h1>
+            </div>
+            <div class="header-actions">
+                <div class="mode-toggle" id="modeToggle">
+                    <div class="mode-toggle-slider"></div>
+                    <button class="mode-toggle-btn active" onclick="setMode(false)">出发模式</button>
+                    <button class="mode-toggle-btn" onclick="setMode(true)">返程模式</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 分类导航 -->
+        <section class="category-section">
+            <div class="category-header">
+                <h2 class="category-title">物品分类</h2>
+                <button class="btn-icon" onclick="toggleCategoryNav()"><i class="fas fa-ellipsis-h"></i></button>
+            </div>
+            <div class="category-nav" id="categoryNav">
+                <!-- 分类按钮将通过JS动态生成 -->
+            </div>
+        </section>
+
+        <!-- 添加物品表单 -->
+        <section class="add-item-card">
+            <h3 class="form-title"><i class="fas fa-plus-circle"></i> 添加新物品</h3>
+            <form class="add-item-form" onsubmit="addItem(event)">
+                <div class="input-group">
+                    <label for="itemName">物品名称</label>
+                    <input type="text" id="itemName" placeholder="例如：护照、充电宝" required>
+                </div>
+                <div class="input-group">
+                    <label for="itemCategory">分类</label>
+                    <select id="itemCategory">
+                        <option value="日常用品">日常用品</option>
+                        <option value="电子设备">电子设备</option>
+                        <option value="重要文件">重要文件</option>
+                        <option value="衣物鞋帽">衣物鞋帽</option>
+                        <option value洗漱用品">洗漱用品</option>
+                        <option value="药品">药品</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="itemQuantity">数量</label>
+                    <input type="number" id="itemQuantity" min="1" value="1">
+                </div>
+                <div class="input-group">
+                    <label for="itemPriority">优先级</label>
+                    <select id="itemPriority">
+                        <option value="高">高</option>
+                        <option value="中" selected>中</option>
+                        <option value="低">低</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="itemNotes">备注</label>
+                    <input type="text" id="itemNotes" placeholder="可选备注信息">
+                </div>
+                <div class="input-group form-actions">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> 添加物品</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- 统计信息 -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-value" id="totalItems">0</div>
+                <div class="stat-label">总物品数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="preparedItems">0</div>
+                <div class="stat-label">已准备</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="unpreparedItems">0</div>
+                <div class="stat-label">未准备</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="highPriorityItems">0</div>
+                <div class="stat-label">高优先级</div>
+            </div>
+        </div>
+
+        <!-- 物品列表 -->
+        <section class="items-container">
+            <div class="items-header">
+                <h2 class="section-title" id="itemsSectionTitle">所有物品</h2>
+                <button class="btn-icon" onclick="toggleItemSort()"><i class="fas fa-sort"></i></button>
+            </div>
+            <div class="items-grid" id="itemList">
+                <!-- 物品卡片将通过JS动态生成 -->
+            </div>
+        </section>
+
+        <!-- 控制按钮 -->
+        <section class="controls-section">
+            <div class="control-card">
+                <h3 class="control-title"><i class="fas fa-plane-departure"></i> 旅行准备</h3>
+                <div class="control-buttons">
+                    <button class="control-btn" onclick="highlightUnprepared()">
+                        <i class="fas fa-search"></i> 检查未准备物品
+                    </button>
+                    <button class="control-btn" onclick="markAllAsPrepared()">
+                        <i class="fas fa-check-double"></i> 标记所有为已准备
+                    </button>
+                    <button class="control-btn" onclick="loadPredefinedList()">
+                        <i class="fas fa-list-alt"></i> 加载预设清单
+                    </button>
+                </div>
+            </div>
+            
+            <div class="control-card">
+                <h3 class="control-title"><i class="fas fa-database"></i> 数据管理</h3>
+                <div class="control-buttons">
+                    <button class="control-btn" onclick="exportData()">
+                        <i class="fas fa-download"></i> 导出数据
+                    </button>
+                    <button class="control-btn" onclick="importData()">
+                        <i class="fas fa-upload"></i> 导入数据
+                    </button>
+                    <button class="control-btn btn-success" onclick="createBackup()">
+                        <i class="fas fa-copy"></i> 创建备份
+                    </button>
+                </div>
+            </div>
+            
+            <div class="control-card">
+                <h3 class="control-title"><i class="fas fa-cog"></i> 设置与维护</h3>
+                <div class="control-buttons">
+                    <button class="control-btn" onclick="changePassword()">
+                        <i class="fas fa-key"></i> 修改密码
+                    </button>
+                    <button class="control-btn" onclick="resetApp()">
+                        <i class="fas fa-redo"></i> 重置应用
+                    </button>
+                    <button class="control-btn btn-danger" onclick="clearAll()">
+                        <i class="fas fa-trash"></i> 清空所有物品
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // 应用状态
+        let isReturnMode = false;
+        let currentCategory = '所有';
+        let sortBy = 'added'; // 'added', 'name', 'priority'
+        let sortAsc = true;
+        const categories = ['所有', '日常用品', '电子设备', '重要文件', '衣物鞋帽', '洗漱用品', '药品', '其他'];
+        let items = JSON.parse(localStorage.getItem('travelItems')) || [];
+
+        // 预定义的旅行物品清单
+        const predefinedLists = {
+            '商务旅行': [
+                {name: '笔记本电脑', category: '电子设备', quantity: 1, priority: '高'},
+                {name: '充电器', category: '电子设备', quantity: 1, priority: '高'},
+                {name: '名片', category: '重要文件', quantity: 20, priority: '中'},
+                {name: '西装/正装', category: '衣物鞋帽', quantity: 1, priority: '高'},
+                {name: '皮鞋', category: '衣物鞋帽', quantity: 1, priority: '高'}
+            ],
+            '海滩度假': [
+                {name: '泳衣', category: '衣物鞋帽', quantity: 2, priority: '高'},
+                {name: '防晒霜', category: '日常用品', quantity: 1, priority: '高'},
+                {name: '太阳镜', category: '日常用品', quantity: 1, priority: '中'},
+                {name: '沙滩巾', category: '日常用品', quantity: 2, priority: '中'},
+                {name: '拖鞋', category: '衣物鞋帽', quantity: 1, priority: '中'}
+            ],
+            '徒步旅行': [
+                {name: '登山鞋', category: '衣物鞋帽', quantity: 1, priority: '高'},
+                {name: '背包', category: '日常用品', quantity: 1, priority: '高'},
+                {name: '水壶', category: '日常用品', quantity: 1, priority: '高'},
+                {name: '地图', category: '重要文件', quantity: 1, priority: '中'},
+                {name: '急救包', category: '药品', quantity: 1, priority: '高'}
+            ]
+        };
+
+        // 初始化应用
+        function initApp() {
+            renderCategories();
+            renderItems();
+            updateStats();
+            
+            // 添加示例数据（如果为空）
+            if (!items.length) {
+                addExampleItems();
+            }
+        }
+
+        // 添加示例物品
+        function addExampleItems() {
+            const exampleItems = [
+                {id: Date.now(), name: '护照', category: '重要文件', quantity: 1, priority: '高', notes: '确保有效期大于6个月', packed: false, returned: false, createdAt: new Date()},
+                {id: Date.now() + 1, name: '手机充电器', category: '电子设备', quantity: 1, priority: '高', notes: '', packed: true, returned: false, createdAt: new Date()},
+                {id: Date.now() + 2, name: 'T恤', category: '衣物鞋帽', quantity: 3, priority: '中', notes: '根据旅行天数准备', packed: false, returned: false, createdAt: new Date()},
+                {id: Date.now() + 3, name: '牙刷', category: '洗漱用品', quantity: 1, priority: '中', notes: '', packed: false, returned: false, createdAt: new Date()}
+            ];
+            
+            items = [...exampleItems];
+            saveData();
+            renderItems();
+            updateStats();
+        }
+
+        // 密码验证
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+            const storedPassword = localStorage.getItem('travelAppPassword') || 'admin123';
+            
+            if (password === storedPassword) {
+                document.querySelector('.password-overlay').style.display = 'none';
+                document.querySelector('.app-container').style.display = 'block';
+                initApp();
+            } else {
+                alert('密码错误，请重试！');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        // 更改密码
+        function changePassword() {
+            const oldPassword = prompt('请输入当前密码：');
+            const storedPassword = localStorage.getItem('travelAppPassword') || 'admin123';
+            
+            if (oldPassword !== storedPassword) {
+                alert('当前密码不正确！');
+                return;
+            }
+            
+            const newPassword = prompt('请输入新密码：');
+            if (newPassword && newPassword.length >= 4) {
+                localStorage.setItem('travelAppPassword', newPassword);
+                alert('密码已成功更新！');
+            } else {
+                alert('密码必须至少4个字符！');
+            }
+        }
+
+        // 设置模式（出发/返程）
+        function setMode(returnMode) {
+            isReturnMode = returnMode;
+            const modeToggle = document.getElementById('modeToggle');
+            
+            if (isReturnMode) {
+                modeToggle.classList.add('sreturn-mode');
+                document.querySelectorAll('.mode-toggle-btn')[0].classList.remove('active');
+                document.querySelectorAll('.mode-toggle-btn')[1].classList.add('active');
+                document.getElementById('itemsSectionTitle').textContent = '返程物品';
+            } else {
+                modeToggle.classList.remove('sreturn-mode');
+                document.querySelectorAll('.mode-toggle-btn')[0].classList.add('active');
+                document.querySelectorAll('.mode-toggle-btn')[1].classList.remove('active');
+                document.getElementById('itemsSectionTitle').textContent = '出发物品';
+            }
+            
+            renderItems();
+        }
+
+        // 切换分类导航显示
+        function toggleCategoryNav() {
+            const nav = document.getElementById('categoryNav');
+            nav.style.display = nav.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        // 渲染分类导航
+        function renderCategories() {
+            const nav = document.getElementById('categoryNav');
+            nav.innerHTML = categories.map(cat => `
+                <button class="category-btn ${cat === currentCategory ? 'active' : ''}" 
+                        onclick="setCategory('${cat}')">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        // 设置当前分类
+        function setCategory(cat) {
+            currentCategory = cat;
+            renderCategories();
+            renderItems();
+        }
+
+        // 切换物品排序
+        function toggleItemSort() {
+            if (sortBy === 'added') {
+                sortBy = 'name';
+            } else if (sortBy === 'name') {
+                sortBy = 'priority';
+            } else {
+                sortBy = 'added';
+                sortAsc = !sortAsc;
+            }
+            
+            renderItems();
+        }
+
+        // 添加新物品
+        function addItem(e) {
+            e.preventDefault();
+            const newItem = {
+                id: Date.now(),
+                name: document.getElementById('itemName').value,
+                category: document.getElementById('itemCategory').value,
+                quantity: parseInt(document.getElementById('itemQuantity').value) || 1,
+                priority: document.getElementById('itemPriority').value,
+                notes: document.getElementById('itemNotes').value,
+                packed: false,
+                returned: false,
+                createdAt: new Date()
+            };
+            
+            items.push(newItem);
+            saveData();
+            renderItems();
+            updateStats();
+            
+            // 重置表单
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQuantity').value = '1';
+            document.getElementById('itemNotes').value = '';
+            document.getElementById('itemName').focus();
+            
+            // 显示成功消息
+            showNotification(`"${newItem.name}" 已添加到清单中`);
+        }
+
+        // 显示通知
+        function showNotification(message) {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: var(--primary-color);
+                color: white;
+                border-radius: 8px;
+                box-shadow: var(--box-shadow);
+                z-index: 1000;
+                opacity: 0;
+                transform: translateY(20px);
+                transition: all 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // 显示通知
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateY(0)';
+            }, 10);
+            
+            // 3秒后隐藏并移除通知
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // 渲染物品列表
+        function renderItems() {
+            // 过滤物品
+            let filtered = items.filter(item => 
+                currentCategory === '所有' || item.category === currentCategory
+            );
+            
+            // 排序物品
+            filtered.sort((a, b) => {
+                let valueA, valueB;
+                
+                if (sortBy === 'name') {
+                    valueA = a.name.toLowerCase();
+                    valueB = b.name.toLowerCase();
+                } else if (sortBy === 'priority') {
+                    const priorityOrder = {高: 3, 中: 2, 低: 1};
+                    valueA = priorityOrder[a.priority];
+                    valueB = priorityOrder[b.priority];
+                } else {
+                    valueA = a.createdAt;
+                    valueB = b.createdAt;
+                }
+                
+                if (valueA < valueB) return sortAsc ? -1 : 1;
+                if (valueA > valueB) return sortAsc ? 1 : -1;
+                return 0;
+            });
+            
+            // 渲染物品
+            const list = document.getElementById('itemList');
+            list.innerHTML = filtered.map(item => `
+                <div class="item-card fade-in" data-id="${item.id}">
+                    <div class="item-header">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-quantity">x${item.quantity}</div>
+                    </div>
+                    <div class="item-category">${item.category}</div>
+                    <div class="item-meta">
+                        <div class="item-priority priority-${item.priority === '高' ? 'high' : item.priority === '中' ? 'medium' : 'low'}">
+                            ${item.priority}优先级
+                        </div>
+                        <div class="item-date">${formatDate(item.createdAt)}</div>
+                    </div>
+                    ${item.notes ? `<div class="item-notes">${item.notes}</div>` : ''}
+                    <div class="item-footer">
+                        <div class="item-status" onclick="toggleStatus(${item.id})">
+                            <div class="status-checkbox ${getStatusClass(item)}"></div>
+                            <span class="status-label">${isReturnMode ? (item.returned ? '已带回' : '未带回') : (item.packed ? '已准备' : '未准备')}</span>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn-icon" onclick="editItem(${item.id})"><i class="fas fa-edit"></i></button>
+                            <button class="btn-icon" onclick="deleteItem(${item.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 格式化日期
+        function formatDate(date) {
+            const d = new Date(date);
+            return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+        }
+
+        // 获取状态类名
+        function getStatusClass(item) {
+            return isReturnMode ? 
+                (item.returned ? 'checked' : '') : 
+                (item.packed ? 'checked' : '');
+        }
+
+        // 切换物品状态
+        function toggleStatus(id) {
+            const item = items.find(i => i.id === id);
+            if (isReturnMode) {
+                item.returned = !item.returned;
+            } else {
+                item.packed = !item.packed;
+            }
+            saveData();
+            renderItems();
+            updateStats();
+        }
+
+        // 标记所有为已准备
+        function markAllAsPrepared() {
+            if (confirm(`确定要标记所有物品为${isReturnMode ? '已带回' : '已准备'}吗？`)) {
+                items.forEach(item => {
+                    if (isReturnMode) {
+                        item.returned = true;
+                    } else {
+                        item.packed = true;
+                    }
+                });
+                saveData();
+                renderItems();
+                updateStats();
+                showNotification(`所有物品已标记为${isReturnMode ? '已带回' : '已准备'}`);
+            }
+        }
+
+        // 高亮未准备的物品
+        function highlightUnprepared() {
+            const unpreparedItems = items.filter(item => 
+                isReturnMode ? !item.returned : !item.packed
+            );
+            
+            if (unpreparedItems.length === 0) {
+                showNotification(`恭喜！所有物品都已${isReturnMode ? '带回' : '准备'}完毕。`);
+                return;
+            }
+            
+            // 高亮显示未准备的物品
+            const list = document.getElementById('itemList');
+            list.querySelectorAll('.item-card').forEach(card => {
+                const id = parseInt(card.dataset.id);
+                const item = items.find(i => i.id === id);
+                
+                if (isReturnMode ? !item.returned : !item.packed) {
+                    card.classList.add('unprepared');
+                    setTimeout(() => card.classList.remove('unprepared'), 3000);
+                }
+            });
+            
+            showNotification(`有 ${unpreparedItems.length} 件物品尚未${isReturnMode ? '带回' : '准备'}`);
+        }
+
+        // 编辑物品
+        function editItem(id) {
+            const item = items.find(i => i.id === id);
+            const newName = prompt('修改物品名称：', item.name);
+            if (newName) {
+                item.name = newName;
+                const newQuantity = prompt('修改数量：', item.quantity);
+                if (newQuantity && !isNaN(newQuantity)) {
+                    item.quantity = parseInt(newQuantity);
+                }
+                const newNotes = prompt('修改备注：', item.notes);
+                item.notes = newNotes;
+                saveData();
+                renderItems();
+                showNotification('物品信息已更新');
+            }
+        }
+
+        // 删除物品
+        function deleteItem(id) {
+            if (confirm('确定要删除这个物品吗？')) {
+                items = items.filter(i => i.id !== id);
+                saveData();
+                renderItems();
+                updateStats();
+                showNotification('物品已删除');
+            }
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('totalItems').textContent = items.length;
+            const prepared = items.filter(i => isReturnMode ? i.returned : i.packed).length;
+            document.getElementById('preparedItems').textContent = prepared;
+            document.getElementById('unpreparedItems').textContent = items.length - prepared;
+            
+            const highPriority = items.filter(i => i.priority === '高').length;
+            document.getElementById('highPriorityItems').textContent = highPriority;
+        }
+
+        // 加载预设清单
+        function loadPredefinedList() {
+            const listType = prompt(`请选择清单类型：\n${Object.keys(predefinedLists).join('\n')}`);
+            
+            if (listType && predefinedLists[listType]) {
+                if (confirm(`确定要加载"${listType}"清单吗？现有物品不会被覆盖。`)) {
+                    predefinedLists[listType].forEach(item => {
+                        items.push({
+                            id: Date.now() + Math.random(),
+                            ...item,
+                            packed: false,
+                            returned: false,
+                            createdAt: new Date(),
+                            notes: ''
+                        });
+                    });
+                    
+                    saveData();
+                    renderItems();
+                    updateStats();
+                    showNotification(`"${listType}"清单已加载`);
+                }
+            } else if (listType) {
+                alert('无效的清单类型！');
+            }
+        }
+
+        // 导出数据
+        function exportData() {
+            const data = JSON.stringify(items, null, 2);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `travel-master-backup-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            showNotification('数据已导出');
+        }
+
+        // 导入数据
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        const importedItems = JSON.parse(reader.result);
+                        if (Array.isArray(importedItems)) {
+                            if (confirm(`确定要导入 ${importedItems.length} 个物品吗？现有物品将被覆盖。`)) {
+                                items = importedItems;
+                                saveData();
+                                renderItems();
+                                updateStats();
+                                showNotification('数据导入成功');
+                            }
+                        } else {
+                            alert('无效的数据格式！');
+                        }
+                    } catch {
+                        alert('文件读取错误！');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // 创建备份
+        function createBackup() {
+            localStorage.setItem('travelItemsBackup', JSON.stringify(items));
+            showNotification('备份已创建');
+        }
+
+        // 恢复备份
+        function restoreBackup() {
+            const backup = localStorage.getItem('travelItemsBackup');
+            if (backup) {
+                if (confirm('确定要从备份恢复数据吗？当前数据将被覆盖。')) {
+                    items = JSON.parse(backup);
+                    saveData();
+                    renderItems();
+                    updateStats();
+                    showNotification('备份已恢复');
+                }
+            } else {
+                alert('没有找到备份！');
+            }
+        }
+
+        // 重置应用
+        function resetApp() {
+            if (confirm('确定要重置应用吗？所有数据将被清除，无法恢复。')) {
+                localStorage.removeItem('travelItems');
+                localStorage.removeItem('travelAppPassword');
+                items = [];
+                window.location.reload();
+            }
+        }
+
+        // 清空所有物品
+        function clearAll() {
+            if (confirm('确定要清空所有物品吗？此操作不可恢复！')) {
+                items = [];
+                saveData();
+                renderItems();
+                updateStats();
+                showNotification('所有物品已清空');
+            }
+        }
+
+        // 保存数据到本地存储
+        function saveData() {
+            localStorage.setItem('travelItems', JSON.stringify(items));
+        }
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            // 尝试从URL参数获取密码（仅用于演示）
+            const urlParams = new URLSearchParams(window.location.search);
+            const demoPassword = urlParams.get('demo');
+            if (demoPassword === 'true') {
+                document.getElementById('passwordInput').value = 'admin123';
+                checkPassword();
+            }
+        });
+
+        // 添加键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+N: 聚焦到物品名称输入框
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                document.getElementById('itemName').focus();
+            }
+            
+            // Ctrl+Enter: 提交表单
+            if (e.ctrlKey && e.key === 'Enter') {
+                const form = document.querySelector('.add-item-form');
+                if (form) {
+                    const event = new Event('submit', { cancelable: true });
+                    form.dispatchEvent(event);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
