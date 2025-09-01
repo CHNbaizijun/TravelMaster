@@ -133,6 +133,7 @@
         .header-actions {
             display: flex;
             gap: 10px;
+            align-items: center;
         }
 
         /* 模式切换器 */
@@ -171,6 +172,27 @@
         }
 
         .mode-toggle .mode-toggle-btn.active {
+            color: white;
+        }
+
+        /* 视图切换按钮 */
+        .view-toggle {
+            display: flex;
+            background: var(--light-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .view-btn {
+            padding: 8px 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .view-btn.active {
+            background: var(--primary-color);
             color: white;
         }
 
@@ -311,24 +333,8 @@
             font-size: 0.9rem;
         }
 
-        /* 物品列表 */
-        .items-container {
-            margin-bottom: 2rem;
-        }
-
-        .items-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
-
-        .items-grid {
+        /* 物品列表 - 详细视图 */
+        .items-container.detailed-view .items-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 15px;
@@ -485,11 +491,114 @@
             background: #dfe6e9;
         }
 
+        /* 物品列表 - 简略视图 */
+        .items-container.compact-view .items-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .compact-item-row {
+            display: flex;
+            align-items: center;
+            background: var(--card-background);
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+        }
+
+        .compact-item-row:hover {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+        }
+
+        .compact-item-row.unprepared {
+            background: #ffebee;
+        }
+
+        .compact-item-name {
+            flex: 1;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .compact-item-quantity {
+            background: var(--light-color);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .compact-item-category {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            width: 80px;
+        }
+
+        .compact-item-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 15px;
+            cursor: pointer;
+        }
+
+        .compact-status-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .compact-status-checkbox.checked {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .compact-status-checkbox.checked::after {
+            content: "✓";
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .compact-item-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .compact-btn-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--light-color);
+            color: var(--text-color);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.8rem;
+        }
+
+        .compact-btn-icon:hover {
+            background: #dfe6e9;
+        }
+
         /* 控制按钮 */
         .controls-section {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
+            margin-top: 2rem;
         }
 
         .control-card {
@@ -583,7 +692,7 @@
                 grid-template-columns: 1fr;
             }
             
-            .items-grid {
+            .items-container.detailed-view .items-grid {
                 grid-template-columns: 1fr;
             }
             
@@ -598,6 +707,18 @@
             .category-nav {
                 overflow-x: auto;
                 padding-bottom: 10px;
+            }
+
+            .compact-item-row {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .compact-item-category {
+                width: auto;
+                order: 3;
+                flex-basis: 100%;
+                margin-left: 35px;
             }
         }
 
@@ -662,6 +783,32 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
+
+        /* 隐藏已准备物品时的样式 */
+        .hide-prepared .item-card[data-prepared="true"],
+        .hide-prepared .compact-item-row[data-prepared="true"] {
+            display: none;
+        }
+
+        .filter-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .filter-toggle {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .filter-toggle input {
+            width: auto;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -686,6 +833,10 @@
                     <div class="mode-toggle-slider"></div>
                     <button class="mode-toggle-btn active" onclick="setMode(false)">出发模式</button>
                     <button class="mode-toggle-btn" onclick="setMode(true)">返程模式</button>
+                </div>
+                <div class="view-toggle">
+                    <button class="view-btn active" id="detailedViewBtn" onclick="setViewMode('detailed')"><i class="fas fa-th-large"></i></button>
+                    <button class="view-btn" id="compactViewBtn" onclick="setViewMode('compact')"><i class="fas fa-list"></i></button>
                 </div>
             </div>
         </header>
@@ -716,7 +867,7 @@
                         <option value="电子设备">电子设备</option>
                         <option value="重要文件">重要文件</option>
                         <option value="衣物鞋帽">衣物鞋帽</option>
-                        <option value洗漱用品">洗漱用品</option>
+                        <option value="洗漱用品">洗漱用品</option>
                         <option value="药品">药品</option>
                         <option value="其他">其他</option>
                     </select>
@@ -765,10 +916,16 @@
         </div>
 
         <!-- 物品列表 -->
-        <section class="items-container">
+        <section class="items-container detailed-view" id="itemsContainer">
             <div class="items-header">
                 <h2 class="section-title" id="itemsSectionTitle">所有物品</h2>
-                <button class="btn-icon" onclick="toggleItemSort()"><i class="fas fa-sort"></i></button>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="filter-toggle">
+                        <input type="checkbox" id="hidePreparedToggle" onchange="toggleHidePrepared()">
+                        <label for="hidePreparedToggle">隐藏已准备物品</label>
+                    </div>
+                    <button class="btn-icon" onclick="toggleItemSort()"><i class="fas fa-sort"></i></button>
+                </div>
             </div>
             <div class="items-grid" id="itemList">
                 <!-- 物品卡片将通过JS动态生成 -->
@@ -830,6 +987,8 @@
         let currentCategory = '所有';
         let sortBy = 'added'; // 'added', 'name', 'priority'
         let sortAsc = true;
+        let isCompactView = false;
+        let hidePrepared = false;
         const categories = ['所有', '日常用品', '电子设备', '重要文件', '衣物鞋帽', '洗漱用品', '药品', '其他'];
         let items = JSON.parse(localStorage.getItem('travelItems')) || [];
 
@@ -938,6 +1097,41 @@
             }
             
             renderItems();
+        }
+
+        // 设置视图模式（详细/简略）
+        function setViewMode(mode) {
+            const container = document.getElementById('itemsContainer');
+            const detailedBtn = document.getElementById('detailedViewBtn');
+            const compactBtn = document.getElementById('compactViewBtn');
+            
+            if (mode === 'compact') {
+                isCompactView = true;
+                container.classList.remove('detailed-view');
+                container.classList.add('compact-view');
+                detailedBtn.classList.remove('active');
+                compactBtn.classList.add('active');
+            } else {
+                isCompactView = false;
+                container.classList.remove('compact-view');
+                container.classList.add('detailed-view');
+                detailedBtn.classList.add('active');
+                compactBtn.classList.remove('active');
+            }
+            
+            renderItems();
+        }
+
+        // 切换隐藏已准备物品
+        function toggleHidePrepared() {
+            hidePrepared = document.getElementById('hidePreparedToggle').checked;
+            const container = document.getElementById('itemsContainer');
+            
+            if (hidePrepared) {
+                container.classList.add('hide-prepared');
+            } else {
+                container.classList.remove('hide-prepared');
+            }
         }
 
         // 切换分类导航显示
@@ -1075,32 +1269,62 @@
             
             // 渲染物品
             const list = document.getElementById('itemList');
-            list.innerHTML = filtered.map(item => `
-                <div class="item-card fade-in" data-id="${item.id}">
-                    <div class="item-header">
-                        <div class="item-name">${item.name}</div>
-                        <div class="item-quantity">x${item.quantity}</div>
-                    </div>
-                    <div class="item-category">${item.category}</div>
-                    <div class="item-meta">
-                        <div class="item-priority priority-${item.priority === '高' ? 'high' : item.priority === '中' ? 'medium' : 'low'}">
-                            ${item.priority}优先级
+            
+            if (isCompactView) {
+                // 简略视图
+                list.innerHTML = filtered.map(item => `
+                    <div class="compact-item-row fade-in" data-id="${item.id}" data-prepared="${isReturnMode ? item.returned : item.packed}">
+                        <div class="compact-item-name">
+                            <span>${item.name}</span>
+                            <span class="compact-item-quantity">x${item.quantity}</span>
                         </div>
-                        <div class="item-date">${formatDate(item.createdAt)}</div>
-                    </div>
-                    ${item.notes ? `<div class="item-notes">${item.notes}</div>` : ''}
-                    <div class="item-footer">
-                        <div class="item-status" onclick="toggleStatus(${item.id})">
-                            <div class="status-checkbox ${getStatusClass(item)}"></div>
+                        <div class="compact-item-category">${item.category}</div>
+                        <div class="compact-item-status" onclick="toggleStatus(${item.id})">
+                            <div class="compact-status-checkbox ${getStatusClass(item)}"></div>
                             <span class="status-label">${isReturnMode ? (item.returned ? '已带回' : '未带回') : (item.packed ? '已准备' : '未准备')}</span>
                         </div>
-                        <div class="item-actions">
-                            <button class="btn-icon" onclick="editItem(${item.id})"><i class="fas fa-edit"></i></button>
-                            <button class="btn-icon" onclick="deleteItem(${item.id})"><i class="fas fa-trash"></i></button>
+                        <div class="compact-item-actions">
+                            <button class="compact-btn-icon" onclick="editItem(${item.id})"><i class="fas fa-edit"></i></button>
+                            <button class="compact-btn-icon" onclick="deleteItem(${item.id})"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } else {
+                // 详细视图
+                list.innerHTML = filtered.map(item => `
+                    <div class="item-card fade-in" data-id="${item.id}" data-prepared="${isReturnMode ? item.returned : item.packed}">
+                        <div class="item-header">
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-quantity">x${item.quantity}</div>
+                        </div>
+                        <div class="item-category">${item.category}</div>
+                        <div class="item-meta">
+                            <div class="item-priority priority-${item.priority === '高' ? 'high' : item.priority === '中' ? 'medium' : 'low'}">
+                                ${item.priority}优先级
+                            </div>
+                            <div class="item-date">${formatDate(item.createdAt)}</div>
+                        </div>
+                        ${item.notes ? `<div class="item-notes">${item.notes}</div>` : ''}
+                        <div class="item-footer">
+                            <div class="item-status" onclick="toggleStatus(${item.id})">
+                                <div class="status-checkbox ${getStatusClass(item)}"></div>
+                                <span class="status-label">${isReturnMode ? (item.returned ? '已带回' : '未带回') : (item.packed ? '已准备' : '未准备')}</span>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn-icon" onclick="editItem(${item.id})"><i class="fas fa-edit"></i></button>
+                                <button class="btn-icon" onclick="deleteItem(${item.id})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // 应用隐藏已准备物品的筛选
+            if (hidePrepared) {
+                document.getElementById('itemsContainer').classList.add('hide-prepared');
+            } else {
+                document.getElementById('itemsContainer').classList.remove('hide-prepared');
+            }
         }
 
         // 格式化日期
@@ -1157,17 +1381,9 @@
                 return;
             }
             
-            // 高亮显示未准备的物品
-            const list = document.getElementById('itemList');
-            list.querySelectorAll('.item-card').forEach(card => {
-                const id = parseInt(card.dataset.id);
-                const item = items.find(i => i.id === id);
-                
-                if (isReturnMode ? !item.returned : !item.packed) {
-                    card.classList.add('unprepared');
-                    setTimeout(() => card.classList.remove('unprepared'), 3000);
-                }
-            });
+            // 自动开启隐藏已准备物品
+            document.getElementById('hidePreparedToggle').checked = true;
+            toggleHidePrepared();
             
             showNotification(`有 ${unpreparedItems.length} 件物品尚未${isReturnMode ? '带回' : '准备'}`);
         }
@@ -1214,7 +1430,9 @@
 
         // 加载预设清单
         function loadPredefinedList() {
-            const listType = prompt(`请选择清单类型：\n${Object.keys(predefinedLists).join('\n')}`);
+            const listTypes = Object.keys(predefinedLists);
+            const listText = listTypes.map((type, index) => `${index + 1}. ${type}`).join('\n');
+            const listType = prompt(`请选择清单类型：\n${listText}`);
             
             if (listType && predefinedLists[listType]) {
                 if (confirm(`确定要加载"${listType}"清单吗？现有物品不会被覆盖。`)) {
@@ -1356,6 +1574,13 @@
                     const event = new Event('submit', { cancelable: true });
                     form.dispatchEvent(event);
                 }
+            }
+            
+            // Ctrl+H: 切换隐藏已准备物品
+            if (e.ctrlKey && e.key === 'h') {
+                e.preventDefault();
+                document.getElementById('hidePreparedToggle').checked = !document.getElementById('hidePreparedToggle').checked;
+                toggleHidePrepared();
             }
         });
     </script>
